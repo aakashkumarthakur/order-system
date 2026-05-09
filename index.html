@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>TableDesk — Order System</title>
+
+  <!-- ── PWA / Install Meta Tags ── -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- iOS Safari PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TableDesk" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+
+  <!-- Android / Chrome -->
+  <meta name="theme-color" content="#1a1410" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="application-name" content="TableDesk" />
+
+  <!-- Splash screens for iPhone -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+
+  <!-- SEO / Description -->
+  <meta name="description" content="Digital order-taking system for hotel and restaurant staff. Manage all tables from one screen." />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <span class="logo-icon">⬡</span>
+        <span class="logo-text">TableDesk</span>
+      </div>
+      <span class="tagline">Order System</span>
+    </div>
+    <div class="header-right">
+      <div class="live-clock" id="clock"></div>
+      <div class="status-wrap">
+        <div class="status-dot"></div>
+        <span class="status-label">Live</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat">
+      <span class="stat-num" id="stat-active">0</span>
+      <span class="stat-label">Active</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <span class="stat-num" id="stat-free">12</span>
+      <span class="stat-label">Free</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <span class="stat-num" id="stat-items">0</span>
+      <span class="stat-label">Items</span>
+    </div>
+  </div>
+
+  <!-- INSTALL BANNER (shown when PWA prompt is available) -->
+  <div class="install-banner" id="installBanner">
+    <span class="install-icon">📲</span>
+    <span class="install-text">Install TableDesk on your device for quick access</span>
+    <button class="install-btn" id="installBtn">Install</button>
+    <button class="install-dismiss" id="installDismiss">✕</button>
+  </div>
+
+  <!-- OFFLINE BANNER -->
+  <div class="offline-banner" id="offlineBanner">
+    <span>⚠ You are offline — orders are saved locally</span>
+  </div>
+
+  <!-- TABLE GRID -->
+  <main class="main">
+    <div class="section-header">
+      <div class="section-label">Floor Plan</div>
+      <div class="legend">
+        <span><span class="dot free"></span>Free</span>
+        <span><span class="dot active"></span>Active</span>
+      </div>
+    </div>
+    <div class="grid" id="tableGrid"></div>
+  </main>
+
+  <!-- MODAL OVERLAY -->
+  <div class="overlay" id="overlay"></div>
+
+  <!-- ORDER MODAL (bottom sheet on mobile) -->
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <!-- Drag handle (mobile) -->
+    <div class="drag-handle-wrap" id="dragHandle">
+      <div class="drag-handle"></div>
+    </div>
+
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <div class="modal-badge" id="modalBadge">T7</div>
+        <div>
+          <h2 class="modal-title" id="modalTitle">Table 7</h2>
+          <p class="modal-subtitle" id="modalSubtitle">No orders yet</p>
+        </div>
+      </div>
+      <button class="close-btn" onclick="closeModal()" aria-label="Close">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <label class="field-label" for="orderTextarea">Order Details</label>
+      <textarea
+        class="order-textarea"
+        id="orderTextarea"
+        placeholder="Type order details here…&#10;e.g. 5 plates Momos&#10;     2 Chowmein&#10;     3 Butter Tea"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+      ></textarea>
+
+      <div class="textarea-footer">
+        <span class="char-count"><span id="charCount">0</span> chars</span>
+        <span class="shortcut-hint">Ctrl+S to save</span>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-clear" onclick="clearOrder()">Clear</button>
+        <button class="btn-save" onclick="saveOrder()">
+          Save Order <span class="btn-icon">✓</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- SAVED PREVIEW -->
+    <div class="saved-preview" id="savedPreview">
+      <div class="preview-label">
+        <span class="preview-dot">✓</span>
+        <span>Saved Order</span>
+        <span class="preview-time" id="previewTime"></span>
+      </div>
+      <pre class="preview-content" id="previewContent"></pre>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
